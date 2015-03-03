@@ -405,7 +405,17 @@ CProcess* getNewProcess()
 {
 	static int NoName=0;
 	int type = rand()%4;
-	CHAR name = ('A' + NoName <= 'Z' ? (CHAR)('A'+NoName++) : 'A' + (NoName = 0)); // Hi Hi Hi
+	CHAR name;
+	if('A' + NoName <= 'Z')
+	{
+		NoName++;
+		name = (CHAR)('A'+NoName);
+	}
+	else
+	{
+		name = 'A' + (NoName = 0);
+	}
+	 //= ( ? (CHAR)('A'+NoName++) : 'A' + (NoName = 0)); // Hi Hi Hi
 	switch (type)
 	{
 		case 0 : return new CProcess(name, 'E', "PrintUnMot.txt");	break;
