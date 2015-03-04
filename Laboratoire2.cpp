@@ -17,6 +17,8 @@ private:
 	CHAR Cadre;
 	CHAR RWX;
 	char Process;
+	unsigned int RBitsNFU;
+	bool MBitsNFU;
 
 public:
 	CTableEntry(CHAR segment, int noSwap, CHAR cadre, CHAR rwx, char process)
@@ -26,12 +28,28 @@ public:
 		Cadre =		cadre;
 		RWX =		rwx;
 		Process =	process;
+		RBitsNFU = 0;
+		MBitsNFU = false;
 	}
 
 	CHAR getCadre()		{	return Cadre;		}
 	CHAR getSegment()	{	return Segment;		}
 	int getNoSwap()	{	return NoSwap;		}
 	char getProcess()	{	return Process;		}
+	unsigned int getR() {   return RBitsNFU;	}
+	bool getM()			{   return MBitsNFU;	}
+		
+
+		
+
+
+	void setR(unsigned int newR)
+	{
+		RBitsNFU = newR;
+	}
+	void setM(bool newM){
+		MBitsNFU = newM;
+	}
 
 	void setCadre(CHAR cadre)	{	Cadre = cadre;	}
 };
@@ -118,8 +136,63 @@ CTableEntry* getPageFault()
 	}
 	
 	void MiseAJour(CHAR no, CHAR data, CHAR adresseProg, CHAR adresseData)
-	{
+	{/**
+		// Besoin de parler a Brian, pourquoi adresseProg et adresseData dans la fonction ? Je ne suis vraiment pas sure de ce que je fais. 
+
+		////////////////////////////////////////////////////////////////
+		// Initialisation des variables
+		////////////////////////////////////////////////////////////////
+		CHAR page = (CHAR)((data & 252)/4);		// ou data >> 2
+
+		CHAR cadreDonnee = PageTable[1][page]->getCadre();
+		CHAR cadreInstruction = PageTable[0][page]->getCadre();
+
+		// Référence le cadre de l'instruction
+		unsigned int RnumberInstruction = TableDesCadres[cadreInstruction]->getR();
+		RnumberInstruction >> 1;
+		RnumberInstruction += 128;
+		TableDesCadres[cadreInstruction]->setR(RnumberInstruction);
+
+		// Référence le cadre des données
+		if(no == 2)
+		{
+			TableDesCadres[cadreDonnee]->setM(true);	//Reviens à mettre le bit M à 1
+			unsigned int Rnumber = TableDesCadres[cadreDonnee]->getR();
+			Rnumber >> 1;
+			Rnumber += 128;
+			TableDesCadres[cadreDonnee]->setR(Rnumber);
+		}
+
+		else if (no == 1 || no == 3 || no == 4)
+		{
+			unsigned int Rnumber = TableDesCadres[cadreDonnee]->getR();
+			Rnumber >> 1;
+			Rnumber += 128;
+			TableDesCadres[cadreDonnee]->setR(Rnumber);
+			//cout << "Save Rnumber test: " << Rnumber << endl;
+
+		}
+		else if (no == 7)//adresse Data different, : adresseData = resolve(Registre & 31, 1);
+		{
+			
+			CHAR monRegistre = Registre & 31;	//Besoin 
+
+			CHAR page = (CHAR)((data & 252)/4);		// ou data >> 2
+			CHAR deplacement = (data & 3);
+			CHAR cadreDonnee = PageTable[1][page]->getCadre();
+			CHAR cadreInstruction = PageTable[0][page]->getCadre();
+			
+
+			// Problème : trouver le bon cadre de page, même si adresseData à changer.
+			// Est-ce que même la même page?
+		}
+
+		// Faire un décalage pour le NFU ici.
+
 		// TO DO
+		//Les bits M et R sont mis à 1 correctement.
+		//Selon le numéro, on réfère ou on modifie ou on fait rien.
+	*/
 	}
 
 	void loadPage(CTableEntry* page)
@@ -137,9 +210,9 @@ CTableEntry* getPageFault()
 		file.close();
 	}
 
-	CHAR getCadreLibre(CHAR segment)	// TO DO
+	CHAR getCadreLibre(CHAR segment)	// TO DO: Votre vode implante un algorithme de changement de page NFU
 	{
-		CHAR cadre =  rand() % (TAILLE/TAILLEPAGE);
+		CHAR cadre =  rand() % (TAILLE/TAILLEPAGE);	//Va chercher un cadre de page random
 		cadre = cadre + segment*TAILLE/TAILLEPAGE;
 		
 		if (TableDesCadres[cadre] != NULL)
@@ -148,7 +221,7 @@ CTableEntry* getPageFault()
 			TableDesCadres[cadre]->setCadre(FAULT);
 			TableDesCadres[cadre] = NULL;
 		}				
-		return cadre;
+		return cadre;	
 	}
 
 	void save(CHAR cadre) 
@@ -183,6 +256,13 @@ CTableEntry* getPageFault()
 
 	void run()
 	{
+		//////////////////////////////////////////////////
+		// Resolce return:
+		// return (cadre != FAULT ? 
+		//		PageTable[segment][page]->getCadre()*TAILLEPAGE + deplacement : 
+		//		FAULT);
+		//////////////////////////////////////////////////
+
 		CHAR newPC = resolve(PC,0);
 
 		char no		= (RAM[newPC] & 224) >> 5;
@@ -268,7 +348,7 @@ CTableEntry* getPageFault()
 		}
 		cout << endl;
 	}
-};
+};		//Fin CProcesseur
 
 
 class CProcess
@@ -296,8 +376,8 @@ public:
 			for (int x = 0; x < TAILLE/TAILLEPAGE; x++)		
 				Table[y][x]= new CTableEntry(y,						// segment 
 											NoProcess*64+y*32+x*TAILLEPAGE,// NoSwap
-											FAULT,					// pas de cadre
-											1 |						// read
+											FAULT,					// pas de cadre		//Mise à jour table des pages
+											1 |						// read			(1 = read only, 3= rw,5 = rx)
 											(y==1 ? 2 : 0) |			// write
 											(y!=1 ? 4 : 0),			// execute
 											id );					// id				
