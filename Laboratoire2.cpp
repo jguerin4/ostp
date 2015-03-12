@@ -17,8 +17,10 @@ private:
 	CHAR Cadre;
 	CHAR RWX;
 	char Process;
-	unsigned int RBitsNFU;
+	unsigned int RNFU;
 	bool MBitsNFU;
+	bool RBitNFU;
+
 
 public:
 	CTableEntry(CHAR segment, int noSwap, CHAR cadre, CHAR rwx, char process)
@@ -28,24 +30,26 @@ public:
 		Cadre =		cadre;
 		RWX =		rwx;
 		Process =	process;
-		RBitsNFU = 0;
+		RNFU = 0;
 		MBitsNFU = false;
+		RBitNFU = false;
 	}
 
 	CHAR getCadre()		{	return Cadre;		}
 	CHAR getSegment()	{	return Segment;		}
 	int getNoSwap()	{	return NoSwap;		}
 	char getProcess()	{	return Process;		}
-	unsigned int getR() {   return RBitsNFU;	}
-	bool getM()			{   return MBitsNFU;	}
-		
-
-		
-
+	unsigned int getR() {   return RNFU;	}
+	bool getBitR()		{   return RBitNFU;	}
+	bool getM()			{   return MBitsNFU;	}		
+	void setBitR(bool r)
+	{
+		RBitNFU = r;
+	}
 
 	void setR(unsigned int newR)
 	{
-		RBitsNFU = newR;
+		RNFU = newR;
 	}
 	void setM(bool newM){
 		MBitsNFU = newM;
@@ -136,63 +140,103 @@ CTableEntry* getPageFault()
 	}
 	
 	void MiseAJour(CHAR no, CHAR data, CHAR adresseProg, CHAR adresseData)
-	{/**
-		// Besoin de parler a Brian, pourquoi adresseProg et adresseData dans la fonction ? Je ne suis vraiment pas sure de ce que je fais. 
-
+	{
 		////////////////////////////////////////////////////////////////
 		// Initialisation des variables
 		////////////////////////////////////////////////////////////////
-		CHAR page = (CHAR)((data & 252)/4);		// ou data >> 2
 
-		CHAR cadreDonnee = PageTable[1][page]->getCadre();
-		CHAR cadreInstruction = PageTable[0][page]->getCadre();
-
-		// Référence le cadre de l'instruction
-		unsigned int RnumberInstruction = TableDesCadres[cadreInstruction]->getR();
-		RnumberInstruction >> 1;
-		RnumberInstruction += 128;
-		TableDesCadres[cadreInstruction]->setR(RnumberInstruction);
-
-		// Référence le cadre des données
-		if(no == 2)
+		if(adresseProg!=255)	//n'est pas en pagefault
 		{
-			TableDesCadres[cadreDonnee]->setM(true);	//Reviens à mettre le bit M à 1
-			unsigned int Rnumber = TableDesCadres[cadreDonnee]->getR();
-			Rnumber >> 1;
-			Rnumber += 128;
-			TableDesCadres[cadreDonnee]->setR(Rnumber);
+			CHAR cadreInstruction = PageTable[0][(adresseProg/TAILLEPAGE)/2]->getCadre();
+			// Référence le cadre de l'instruction
+			if(cadreInstruction != 255)
+			{
+				TableDesCadres[cadreInstruction]->setBitR(true);
+		
+				unsigned int RnumberInstruction = TableDesCadres[cadreInstruction]->getR();
+				RnumberInstruction /= 2;
+				RnumberInstruction += 2147483648;
+				TableDesCadres[cadreInstruction]->setR(RnumberInstruction);
+			}
 		}
 
-		else if (no == 1 || no == 3 || no == 4)
-		{
-			unsigned int Rnumber = TableDesCadres[cadreDonnee]->getR();
-			Rnumber >> 1;
-			Rnumber += 128;
-			TableDesCadres[cadreDonnee]->setR(Rnumber);
-			//cout << "Save Rnumber test: " << Rnumber << endl;
+		if(adresseData != 255)
+		{//cout << "adresseData: " << (int)adresseData << endl;
+			int index = (adresseData/TAILLEPAGE)/2;
+			CHAR cadreDonnee = PageTable[1][(adresseData/TAILLEPAGE)/2]->getCadre();	// on veut le cadre libre, ca cest pas correcte ste shit la
+			if(cadreDonnee != 255)
+			{//cout << "e2" << endl;
+				// Référence le cadre des données
+				if(TableDesCadres[cadreDonnee]->getBitR() == false)	//Être sure qu'on n'a pas de conflit avec l'instruction
+				{//cout << "e3" << endl;
+					if(no == 2)
+					{
+						TableDesCadres[cadreDonnee]->setBitR(true);
+						TableDesCadres[cadreDonnee]->setM(true);	//Reviens à mettre le bit M à 1
+						unsigned int Rnumber = TableDesCadres[cadreDonnee]->getR();
+						Rnumber /= 2;
+						Rnumber += 2147483648;
+						TableDesCadres[cadreDonnee]->setR(Rnumber);
+					}
 
-		}
-		else if (no == 7)//adresse Data different, : adresseData = resolve(Registre & 31, 1);
-		{
+					else if (no == 1 || no == 3 || no == 4)
+					{
+						TableDesCadres[cadreDonnee]->setBitR(true);
+						unsigned int Rnumber = TableDesCadres[cadreDonnee]->getR();
+						Rnumber /= 2;
+						Rnumber += 2147483648;
+						TableDesCadres[cadreDonnee]->setR(Rnumber);
+						//cout << "Save Rnumber test: " << Rnumber << endl;
+
+					}
+					else if (no == 7)//adresse Data different, : adresseData = resolve(Registre & 31, 1);
+					{
+						if(data == 0)
+						{
+							adresseData = resolve(Registre & 31, 1);
+
+							cadreDonnee = PageTable[1][adresseData/TAILLEPAGE]->getCadre();
 			
-			CHAR monRegistre = Registre & 31;	//Besoin 
+							TableDesCadres[cadreDonnee]->setBitR(true);
+							unsigned int Rnumber = TableDesCadres[cadreDonnee]->getR();
+							Rnumber /= 2;
+							Rnumber += 2147483648;
+							TableDesCadres[cadreDonnee]->setR(Rnumber);
+							//cout << "print Rnumber test: " << Rnumber << endl;
+						}
+						// Problème : trouver le bon cadre de page, même si adresseData à changer.
+						// Est-ce que même la même page?
+					}
+				}
+			}
 
-			CHAR page = (CHAR)((data & 252)/4);		// ou data >> 2
-			CHAR deplacement = (data & 3);
-			CHAR cadreDonnee = PageTable[1][page]->getCadre();
-			CHAR cadreInstruction = PageTable[0][page]->getCadre();
-			
-
-			// Problème : trouver le bon cadre de page, même si adresseData à changer.
-			// Est-ce que même la même page?
 		}
 
-		// Faire un décalage pour le NFU ici.
+	if(adresseData != 255 || adresseProg != 255)
+	{
+		for(int x = 0; x < 2; x++)
+		{
+			for(int y = 0; y < TAILLE/TAILLEPAGE;y++)
+			{
+				if(PageTable[x][y]->getCadre() != 255)
+				{
+					if(TableDesCadres[PageTable[x][y]->getCadre()]->getBitR() == false)
+					{
+						unsigned int Rnumber = TableDesCadres[PageTable[x][y]->getCadre()]->getR();
+						Rnumber /= 2;
+						TableDesCadres[PageTable[x][y]->getCadre()]->setR(Rnumber);
+						//cout << "-----------NFU Decalage non Reference---------------:" <<  TableDesCadres[PageTable[x][y]->getCadre()]->getR() << endl;
 
-		// TO DO
-		//Les bits M et R sont mis à 1 correctement.
-		//Selon le numéro, on réfère ou on modifie ou on fait rien.
-	*/
+					}
+					else
+					{
+						TableDesCadres[PageTable[x][y]->getCadre()]->setBitR(false);
+						//cout << "----NFU Decalage Reference------:" <<  TableDesCadres[PageTable[x][y]->getCadre()]->getR() << "x,y" << x << "," << y << endl;
+					}
+				}
+			}
+		}
+	}
 	}
 
 	void loadPage(CTableEntry* page)
@@ -201,6 +245,7 @@ CTableEntry* getPageFault()
 	
 		page->setCadre(cadreLibre);
 		TableDesCadres[cadreLibre] = page;
+		cout << (int)cadreLibre << endl;
 
 		ifstream file("Swap.cpp", ios::binary);		
 		file.seekg(page->getNoSwap());
@@ -209,10 +254,51 @@ CTableEntry* getPageFault()
 			file >> std::noskipws >> RAM[cadreLibre*TAILLEPAGE+y];
 		file.close();
 	}
-
-	CHAR getCadreLibre(CHAR segment)	// TO DO: Votre vode implante un algorithme de changement de page NFU
+	/**
+	CHAR getCadreLibre(CHAR segment)	// TO DO: votre code implante un algorithme de changement de page NFU
 	{
-		CHAR cadre =  rand() % (TAILLE/TAILLEPAGE);	//Va chercher un cadre de page random
+		//CHAR cadre =  rand() % (TAILLE/TAILLEPAGE);	//Va chercher un cadre de page random
+		//cadre = cadre + segment*TAILLE/TAILLEPAGE;			
+
+		unsigned int minim = 4294967295;
+		CHAR cadre = 0;
+
+		for(int y = 0; y < TAILLE/TAILLEPAGE;y++)
+		{
+			if(TableDesCadres[segment * 8 + y] != NULL)
+			{
+				if(TableDesCadres[segment * 8 + y]->getR() < minim)
+				{
+					minim = TableDesCadres[segment * 8 + y]->getR();
+					cadre = segment * 8 + y;
+				}
+				//cout << "-----------NFU Decalage non Reference---------------:" <<  TableDesCadres[PageTable[x][y]->getCadre()]->getR() << endl;
+			}
+			else
+			{
+				cadre = segment * 8 + y;
+				break;
+			}
+		}
+		if(TableDesCadres[cadre] != NULL)
+		{
+			if (TableDesCadres[cadre]->getM() == true)
+			{
+				save(cadre);
+			}	
+		
+			TableDesCadres[cadre]->setCadre(FAULT);
+			TableDesCadres[cadre] = NULL;
+		}
+		//cout << "------Cadre:-------:" << (int)cadre << endl;
+		return cadre;	
+	}
+	/**/
+
+	/**/
+	CHAR getCadreLibre(CHAR segment)	// TO DO
+	{
+		CHAR cadre =  rand() % (TAILLE/TAILLEPAGE);
 		cadre = cadre + segment*TAILLE/TAILLEPAGE;
 		
 		if (TableDesCadres[cadre] != NULL)
@@ -221,9 +307,8 @@ CTableEntry* getPageFault()
 			TableDesCadres[cadre]->setCadre(FAULT);
 			TableDesCadres[cadre] = NULL;
 		}				
-		return cadre;	
-	}
-
+		return cadre;
+	}/**/
 	void save(CHAR cadre) 
 	{
 		ofstream file("Swap.cpp", ios::binary | ios::out | ios::in | ios::ate);
@@ -268,7 +353,7 @@ CTableEntry* getPageFault()
 		char no		= (RAM[newPC] & 224) >> 5;
 		CHAR data	= (RAM[newPC] & 31);
 	
-		CHAR adresseProg = resolve(data,0);
+		CHAR adresseProg = resolve(data,0);	// resolve retourne adresse memoire physique totale
 		CHAR adresseData = resolve(data,1);
 
 		MiseAJour(no, data, adresseProg, adresseData);
@@ -522,7 +607,7 @@ void executerUneInstruction(CProcess* process)
 		
 	CTableEntry* page = NULL;
 	while ((page = CPU.getPageFault()) != NULL)	CPU.loadPage(page);
-
+	
 	CPU.run();
 
 	process->setPC(CPU.retPC());
