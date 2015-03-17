@@ -120,7 +120,7 @@ CTableEntry* getPageFault()
 		CHAR no	= (RAM[instruction] & 224) >> 5;
 		CHAR data (RAM[instruction] & 31);
 		
-		if ((no >=1 && no <= 4)) 
+		if (no >=1 && no <= 4) 
 		{
 			CHAR page = (CHAR)((data & 252)/4);
 			if (PageTable[1][page]->getCadre() == FAULT)
@@ -245,7 +245,7 @@ CTableEntry* getPageFault()
 	
 		page->setCadre(cadreLibre);
 		TableDesCadres[cadreLibre] = page;
-		cout << (int)cadreLibre << endl;
+		//cout << (int)cadreLibre << endl;
 
 		ifstream file("Swap.cpp", ios::binary);		
 		file.seekg(page->getNoSwap());
@@ -254,7 +254,7 @@ CTableEntry* getPageFault()
 			file >> std::noskipws >> RAM[cadreLibre*TAILLEPAGE+y];
 		file.close();
 	}
-	/**
+	
 	CHAR getCadreLibre(CHAR segment)	// TO DO: votre code implante un algorithme de changement de page NFU
 	{
 		//CHAR cadre =  rand() % (TAILLE/TAILLEPAGE);	//Va chercher un cadre de page random
@@ -262,41 +262,50 @@ CTableEntry* getPageFault()
 
 		unsigned int minim = 4294967295;
 		CHAR cadre = 0;
+		/*cout<<"pc: "<<(int)retPC()<<endl;
+		cout<<"reg: "<<(int)retRegistre()<<endl;
+		cout<<"state: "<<(int)retState()<<endl;*/
 
 		for(int y = 0; y < TAILLE/TAILLEPAGE;y++)
 		{
-			if(TableDesCadres[segment * 8 + y] != NULL)
+			if(TableDesCadres[segment * 8 + y] == NULL)
 			{
-				if(TableDesCadres[segment * 8 + y]->getR() < minim)
+				cadre = segment * 8 + y;
+				//noswap has no NoProcess
+				//noprocess is always 0
+				
+				TableDesCadres[cadre] = new CTableEntry(segment,
+					PageTable[segment][y]->getNoSwap(),
+					cadre,
+					1 |						// read			(1 = read only, 3= rw,5 = rx)
+					(segment==1 ? 2 : 0) |			// write
+					(segment!=1 ? 4 : 0),
+					PageTable[segment][y]->getProcess());
+
+				break;
+			}
+
+			if(TableDesCadres[segment * 8 + y]->getR() < minim)
 				{
 					minim = TableDesCadres[segment * 8 + y]->getR();
 					cadre = segment * 8 + y;
 				}
 				//cout << "-----------NFU Decalage non Reference---------------:" <<  TableDesCadres[PageTable[x][y]->getCadre()]->getR() << endl;
-			}
-			else
-			{
-				cadre = segment * 8 + y;
-				break;
-			}
 		}
-		if(TableDesCadres[cadre] != NULL)
+		if (TableDesCadres[cadre]->getM() == true)
 		{
-			if (TableDesCadres[cadre]->getM() == true)
-			{
-				save(cadre);
-			}	
+			save(cadre);
+		}	
 		
-			TableDesCadres[cadre]->setCadre(FAULT);
-			TableDesCadres[cadre] = NULL;
-		}
+		TableDesCadres[cadre]->setCadre(FAULT);
+		TableDesCadres[cadre] = NULL;
 		//cout << "------Cadre:-------:" << (int)cadre << endl;
 		return cadre;	
 	}
 	/**/
 
 	/**/
-	CHAR getCadreLibre(CHAR segment)	// TO DO
+	/*CHAR getCadreLibre(CHAR segment)	// TO DO
 	{
 		CHAR cadre =  rand() % (TAILLE/TAILLEPAGE);
 		cadre = cadre + segment*TAILLE/TAILLEPAGE;
@@ -471,7 +480,7 @@ public:
 		NoProcess ++;
 	}
 
-	CProcess()
+	~CProcess()
 	{
 		for (int y = 0; y < 2; y++)
 		{
