@@ -37,15 +37,15 @@ public:
 
 	CHAR getCadre()		{	return Cadre;		}
 	CHAR getSegment()	{	return Segment;		}
-	int getNoSwap()	{	return NoSwap;		}
+	int getNoSwap()		{	return NoSwap;		}
 	char getProcess()	{	return Process;		}
-	unsigned int getR() {   return RNFU;	}
-	bool getBitR()		{   return RBitNFU;	}
+	unsigned int getR() {   return RNFU;		}
+	bool getBitR()		{   return RBitNFU;		}
 	bool getM()			{   return MBitsNFU;	}		
-	void setBitR(bool r)
-	{
-		RBitNFU = r;
-	}
+	CHAR getProtection(){   return RWX;			}
+	
+	
+	void setBitR(bool r){	RBitNFU = r;		}
 
 	void setR(unsigned int newR)
 	{
@@ -145,12 +145,24 @@ CTableEntry* getPageFault()
 		// Initialisation des variables
 		////////////////////////////////////////////////////////////////
 
+		CHAR verifProtection;
+
+		////////////////////////////////////////////////////////////////
+		// Référencement de l'instruction
+		////////////////////////////////////////////////////////////////
+
 		if(adresseProg!=255)	//n'est pas en pagefault
 		{
 			CHAR cadreInstruction = PageTable[0][(adresseProg/TAILLEPAGE)/2]->getCadre();
 			// Référence le cadre de l'instruction
 			if(cadreInstruction != 255)
 			{
+				verifProtection = TableDesCadres[cadreInstruction]->getProtection() & 5;
+				if(verifProtection != 5)	//Protection
+				{
+					cout << endl << "Exception: Il est impossible d'effectuer cette action sur cette case mémoire. Protection: " << TableDesCadres[cadreInstruction]->getProtection() << endl;
+					exit(0);
+				}
 				TableDesCadres[cadreInstruction]->setBitR(true);
 		
 				unsigned int RnumberInstruction = TableDesCadres[cadreInstruction]->getR();
@@ -160,6 +172,9 @@ CTableEntry* getPageFault()
 			}
 		}
 
+		//////////////////////////////////////////////////////////////////
+		// Référencement des données
+		//////////////////////////////////////////////////////////////////
 		if(adresseData != 255)
 		{//cout << "adresseData: " << (int)adresseData << endl;
 			int index = (adresseData/TAILLEPAGE)/2;
@@ -171,6 +186,12 @@ CTableEntry* getPageFault()
 				{//cout << "e3" << endl;
 					if(no == 2)
 					{
+						verifProtection = TableDesCadres[cadreDonnee]->getProtection() & 3;
+						if(verifProtection != 3)	//Protection
+						{
+							cout << endl << "Exception: Il est impossible d'effectuer cette action sur cette case mémoire (Écriture). Protection: " << TableDesCadres[cadreDonnee]->getProtection() << endl;
+							exit(0);
+						}
 						TableDesCadres[cadreDonnee]->setBitR(true);
 						TableDesCadres[cadreDonnee]->setM(true);	//Reviens à mettre le bit M à 1
 						unsigned int Rnumber = TableDesCadres[cadreDonnee]->getR();
@@ -181,6 +202,13 @@ CTableEntry* getPageFault()
 
 					else if (no == 1 || no == 3 || no == 4)
 					{
+						verifProtection = TableDesCadres[cadreDonnee]->getProtection() & 1;
+						if(verifProtection != 1)	//Protection
+						{
+							cout << endl << "Exception: Il est impossible d'effectuer cette action sur cette case mémoire.(lecture) Protection:" << TableDesCadres[cadreDonnee]->getProtection() << endl;
+							exit(0);
+						}
+
 						TableDesCadres[cadreDonnee]->setBitR(true);
 						unsigned int Rnumber = TableDesCadres[cadreDonnee]->getR();
 						Rnumber /= 2;
@@ -193,6 +221,12 @@ CTableEntry* getPageFault()
 					{
 						if(data == 0)
 						{
+							verifProtection = TableDesCadres[cadreDonnee]->getProtection() & 1;
+							if(verifProtection != 1)	//Protection
+							{
+								cout << endl << "Exception: Il est impossible d'effectuer cette action sur cette case mémoire.(lecture) Protection:" << TableDesCadres[cadreDonnee]->getProtection() << endl;
+								exit(0);
+							}
 							adresseData = resolve(Registre & 31, 1);
 
 							cadreDonnee = PageTable[1][adresseData/TAILLEPAGE]->getCadre();
@@ -237,6 +271,7 @@ CTableEntry* getPageFault()
 			}
 		}
 	}
+
 	}
 
 	void loadPage(CTableEntry* page)
@@ -257,15 +292,42 @@ CTableEntry* getPageFault()
 	
 	CHAR getCadreLibre(CHAR segment)	// TO DO: votre code implante un algorithme de changement de page NFU
 	{
-		//CHAR cadre =  rand() % (TAILLE/TAILLEPAGE);	//Va chercher un cadre de page random
-		//cadre = cadre + segment*TAILLE/TAILLEPAGE;			
-
 		unsigned int minim = 4294967295;
 		CHAR cadre = 0;
-		/*cout<<"pc: "<<(int)retPC()<<endl;
-		cout<<"reg: "<<(int)retRegistre()<<endl;
-		cout<<"state: "<<(int)retState()<<endl;*/
+		bool nonmodVerifiable[8];
+		bool tousModifie = true;
+		// Vérifie initialement si les cadres ont été modifié. Si c'est les cas, on évite de les changer à tout prix.
+		for(int y = 0; y < TAILLE/TAILLEPAGE;y++)	// Vérifie initialement si les cadres ont été modifié. Si c'est les cas, on évite de les changer à tout prix.
+		{
+			if(TableDesCadres[segment * 8 + y] != NULL)
+			{
+				if(TableDesCadres[segment * 8 + y]->getM() == true)
+				{
+					nonmodVerifiable[y] = false;
+				}
+				else
+				{
+					nonmodVerifiable[y] = true;
+					tousModifie = false;
+				}
+			}
+			else
+			{
+				// le cadre est vide, donc non modifié
+			}
+			{
+				nonmodVerifiable[y] = true;
+				tousModifie = false;
+			}
+		}
+		if (tousModifie == true)
+		{
+			fill(nonmodVerifiable,nonmodVerifiable + sizeof(nonmodVerifiable),true); //Rempli le tablea à true, car ils faut tous les considérés s'ils ont tous été modifiés
+		}
 
+		// Les cadres sont tous non modifié, on doit donc tous les considérer.
+
+		//Vérifie s'il y a des cadres de pages vides. Si on , on le sélectionne immédiatement
 		for(int y = 0; y < TAILLE/TAILLEPAGE;y++)
 		{
 			if(TableDesCadres[segment * 8 + y] == NULL)
@@ -282,10 +344,12 @@ CTableEntry* getPageFault()
 					(segment!=1 ? 4 : 0),
 					PageTable[segment][y]->getProcess());
 
-				break;
+				break;	// On a choisit le cadre, on peut arrêter de chercher.
 			}
 
-			if(TableDesCadres[segment * 8 + y]->getR() < minim)
+
+			//On choisit alors un nouveau cadre, ayant été référencé il y a le plus longtemps posible.
+			if((TableDesCadres[segment * 8 + y]->getR() < minim) && (nonmodVerifiable[y] == true))	// &&: Si le cadre à été modifié et d'autres non, on ne le choisit pas automatiquement
 				{
 					minim = TableDesCadres[segment * 8 + y]->getR();
 					cadre = segment * 8 + y;
@@ -302,22 +366,7 @@ CTableEntry* getPageFault()
 		//cout << "------Cadre:-------:" << (int)cadre << endl;
 		return cadre;	
 	}
-	/**/
 
-	/**/
-	/*CHAR getCadreLibre(CHAR segment)	// TO DO
-	{
-		CHAR cadre =  rand() % (TAILLE/TAILLEPAGE);
-		cadre = cadre + segment*TAILLE/TAILLEPAGE;
-		
-		if (TableDesCadres[cadre] != NULL)
-		{
-			save(cadre);
-			TableDesCadres[cadre]->setCadre(FAULT);
-			TableDesCadres[cadre] = NULL;
-		}				
-		return cadre;
-	}/**/
 	void save(CHAR cadre) 
 	{
 		ofstream file("Swap.cpp", ios::binary | ios::out | ios::in | ios::ate);
