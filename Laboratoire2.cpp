@@ -1,5 +1,6 @@
 #include <iostream>
 #include <fstream>
+#include <cstdlib>
 using namespace std;
 
 
@@ -153,7 +154,8 @@ CTableEntry* getPageFault()
 
 		if(adresseProg!=255)	//n'est pas en pagefault
 		{
-			CHAR cadreInstruction = PageTable[0][(adresseProg/TAILLEPAGE)/2]->getCadre();
+			//cout << "Adresse prog: " << (int)adresseProg << endl;
+			CHAR cadreInstruction = PageTable[0][(adresseProg/TAILLEPAGE)]->getCadre();
 			// Référence le cadre de l'instruction
 			if(cadreInstruction != 255)
 			{
@@ -161,7 +163,7 @@ CTableEntry* getPageFault()
 				if(verifProtection != 5)	//Protection
 				{
 					cout << endl << "Exception: Il est impossible d'effectuer cette action sur cette case mémoire. Protection: " << TableDesCadres[cadreInstruction]->getProtection() << endl;
-					exit(0);
+					std::exit(0);
 				}
 				TableDesCadres[cadreInstruction]->setBitR(true);
 		
@@ -177,20 +179,22 @@ CTableEntry* getPageFault()
 		//////////////////////////////////////////////////////////////////
 		if(adresseData != 255)
 		{//cout << "adresseData: " << (int)adresseData << endl;
-			int index = (adresseData/TAILLEPAGE)/2;
-			CHAR cadreDonnee = PageTable[1][(adresseData/TAILLEPAGE)/2]->getCadre();	// on veut le cadre libre, ca cest pas correcte ste shit la
+			int index = (adresseData/TAILLEPAGE);
+			
+			CHAR cadreDonnee = PageTable[1][((adresseData-32) / TAILLEPAGE)]->getCadre();	// on veut le cadre libre
+			
 			if(cadreDonnee != 255)
-			{//cout << "e2" << endl;
+			{
 				// Référence le cadre des données
 				if(TableDesCadres[cadreDonnee]->getBitR() == false)	//Être sure qu'on n'a pas de conflit avec l'instruction
-				{//cout << "e3" << endl;
+				{
 					if(no == 2)
 					{
 						verifProtection = TableDesCadres[cadreDonnee]->getProtection() & 3;
 						if(verifProtection != 3)	//Protection
 						{
 							cout << endl << "Exception: Il est impossible d'effectuer cette action sur cette case mémoire (Écriture). Protection: " << TableDesCadres[cadreDonnee]->getProtection() << endl;
-							exit(0);
+							std::exit(0);
 						}
 						TableDesCadres[cadreDonnee]->setBitR(true);
 						TableDesCadres[cadreDonnee]->setM(true);	//Reviens à mettre le bit M à 1
@@ -206,7 +210,7 @@ CTableEntry* getPageFault()
 						if(verifProtection != 1)	//Protection
 						{
 							cout << endl << "Exception: Il est impossible d'effectuer cette action sur cette case mémoire.(lecture) Protection:" << TableDesCadres[cadreDonnee]->getProtection() << endl;
-							exit(0);
+							std::exit(0);
 						}
 
 						TableDesCadres[cadreDonnee]->setBitR(true);
@@ -225,12 +229,13 @@ CTableEntry* getPageFault()
 							if(verifProtection != 1)	//Protection
 							{
 								cout << endl << "Exception: Il est impossible d'effectuer cette action sur cette case mémoire.(lecture) Protection:" << TableDesCadres[cadreDonnee]->getProtection() << endl;
-								exit(0);
+								std::exit(0);
 							}
 							adresseData = resolve(Registre & 31, 1);
 
-							cadreDonnee = PageTable[1][adresseData/TAILLEPAGE]->getCadre();
+							cadreDonnee = PageTable[1][(adresseData-32)/TAILLEPAGE]->getCadre();
 			
+
 							TableDesCadres[cadreDonnee]->setBitR(true);
 							unsigned int Rnumber = TableDesCadres[cadreDonnee]->getR();
 							Rnumber /= 2;
@@ -277,10 +282,11 @@ CTableEntry* getPageFault()
 	void loadPage(CTableEntry* page)
 	{
 		CHAR cadreLibre = getCadreLibre(page->getSegment());
+		
 	
 		page->setCadre(cadreLibre);
 		TableDesCadres[cadreLibre] = page;
-		//cout << (int)cadreLibre << endl;
+		//cout << "cadre:" << (int)cadreLibre << endl; ///////////f1//////////////////
 
 		ifstream file("Swap.cpp", ios::binary);		
 		file.seekg(page->getNoSwap());
@@ -297,6 +303,7 @@ CTableEntry* getPageFault()
 		bool nonmodVerifiable[8];
 		bool tousModifie = true;
 		// Vérifie initialement si les cadres ont été modifié. Si c'est les cas, on évite de les changer à tout prix.
+
 		for(int y = 0; y < TAILLE/TAILLEPAGE;y++)	// Vérifie initialement si les cadres ont été modifié. Si c'est les cas, on évite de les changer à tout prix.
 		{
 			if(TableDesCadres[segment * 8 + y] != NULL)
@@ -358,12 +365,12 @@ CTableEntry* getPageFault()
 		}
 		if (TableDesCadres[cadre]->getM() == true)
 		{
+			TableDesCadres[cadre]->setM(false);
 			save(cadre);
 		}	
 		
 		TableDesCadres[cadre]->setCadre(FAULT);
 		TableDesCadres[cadre] = NULL;
-		//cout << "------Cadre:-------:" << (int)cadre << endl;
 		return cadre;	
 	}
 
@@ -627,7 +634,8 @@ int main()
 CProcess* getNewProcess()
 {
 	static int NoName=0;
-	int type = rand()%4;
+	
+	int type = std::rand()%4;
 	CHAR name;
 	if('A' + NoName <= 'Z')
 	{
@@ -664,8 +672,10 @@ void executerUneInstruction(CProcess* process)
 	setActiveProcess(process);
 		
 	CTableEntry* page = NULL;
-	while ((page = CPU.getPageFault()) != NULL)	CPU.loadPage(page);
-	
+	while ((page = CPU.getPageFault()) != NULL)
+	{
+		CPU.loadPage(page);
+	}
 	CPU.run();
 
 	process->setPC(CPU.retPC());
