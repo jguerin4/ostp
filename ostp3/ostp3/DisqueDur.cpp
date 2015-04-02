@@ -26,15 +26,17 @@ DisqueDur::~DisqueDur()
 
 string DisqueDur::readBlock(unsigned char numeroBlock)
 {
-	string buffer = new char[64];
+	char * buffer = new char[64];
 	ifstream HDDH("HD.DH", ios::in);
 	if(HDDH)
 	{
 		HDDH.seekg(numeroBlock);
-		HDDH.read((char *)buffer,64);
+		HDDH.read(buffer,64);
 		HDDH.close();
 		
-		return buffer;
+		string data = (string)buffer;
+		data = data.substr(0,64);
+		return data;
 
 	}
 	else
