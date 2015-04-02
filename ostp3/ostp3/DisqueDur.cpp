@@ -103,6 +103,13 @@ void DisqueDur::writeBlock(unsigned char numeroBlock, string tampEcriture)
 
 }
 
+void DisqueDur::createElementCatalogue(int i,elementCatalogue* element)
+{
+	catalogue[i] = element;
+}
 
-
+elementCatalogue* DisqueDur::getElementCatalogue(int i)
+{
+	return catalogue[i]; 
+}
 
