@@ -8,6 +8,7 @@ using namespace std;
 struct elementCatalogue{	// Le catalogue sert à indiquer le premier index d'un fichier dans la FAT-8
 	string fileName;
 	unsigned char indexFirstBlock;
+	unsigned char filesize;
 };
 
 class DisqueDur
