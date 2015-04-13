@@ -30,17 +30,21 @@ void Os::read(string nomFichier, CHAR position, CHAR nombreCaractere, string* ta
 	}
 
 	string* tempRead = new string();
-	CHAR fileDelay = 0;
-	//set position
+	int fileDelay =0;
 	while (fileDelay + 64 < position)
 	{
-		beginIndex = ExtendFile(beginIndex);
-		fileDelay += 64;
+		if (beginIndex != 255)
+		{
+			beginIndex = fat[beginIndex];
+			fileDelay += 64;
+		}
+		else
+			break;
+
 	}
 
 	int blocIndex = beginIndex;
 	int charRead = 0;
-	int firstReadDelay = 0;
 	//get right char amount
 	while (true)
 	{
@@ -50,8 +54,7 @@ void Os::read(string nomFichier, CHAR position, CHAR nombreCaractere, string* ta
 
 		if (charRead == 0)// premier bloc a lire dedans
 		{
-			*leftBlockString = tempRead->substr(0, position - fileDelay);
-			firstReadDelay = leftBlockString->size();
+			*leftBlockString = tempRead->substr(0, position%64);
 
 			if (nombreCaractere - charRead <= 64)
 			{
@@ -84,7 +87,11 @@ void Os::read(string nomFichier, CHAR position, CHAR nombreCaractere, string* ta
 		{
 			blocIndex = fat[blocIndex];
 			if (blocIndex == 255)
+			{
+				cout << "end of file "<<endl;
 				break;
+			}
+				
 		}
 	}
 }
@@ -150,7 +157,14 @@ void Os::write(string nomFichier, CHAR position, CHAR nombreCaractere, string* t
 	//set position
 	while (fileDelay + 64 < position)
 	{
-		beginIndex = ExtendFile(beginIndex);
+		if (beginIndex != 255)
+		{
+			beginIndex = fat[beginIndex];
+		}
+		else
+		{
+			beginIndex = ExtendFile(beginIndex);
+		}
 		fileDelay += 64;
 	}
 
@@ -167,7 +181,7 @@ void Os::write(string nomFichier, CHAR position, CHAR nombreCaractere, string* t
 
 		if (charRead == 0)// premier bloc a ecrire dedans
 		{
-			*leftBlockString = tempWrite->substr(0, position - fileDelay);
+			*leftBlockString = tempWrite->substr(0, position%64);
 			firstReadDelay = leftBlockString->size();
 
 			if (nombreCaractere - charRead <= 64)
@@ -214,5 +228,61 @@ void Os::write(string nomFichier, CHAR position, CHAR nombreCaractere, string* t
 
 void Os::deleteEOF(string nomFichier, CHAR position)
 {
+	CHAR beginIndex = 0;
+	for (int i = 1; i<256; i++)
+	{
+		if (hd->getElementCatalogue(i)->fileName == nomFichier)
+		{
+			beginIndex = hd->getElementCatalogue(i)->indexFirstBlock;
+			break;
+		}
+	}
+
+	int fileDelay = 0;
+	while (fileDelay + 64 < position)
+	{
+		if (beginIndex != 255)
+		{
+			beginIndex = fat[beginIndex];
+			fileDelay += 64;
+		}
+		else
+		{
+			cout << "la position est plus grande que le fichier" << endl;
+			return;
+		}
+	}
+
+	string* tempRead = new string();
+	int blocIndex = beginIndex;
+	
+	//delete right char amount
+	*tempRead = hd->readBlock(blocIndex);
+	string* leftBlockString = new string();
+	*leftBlockString = tempRead->substr(0, position % 64);
+
+	hd->writeBlock(blocIndex, *leftBlockString + string(64 - position % 64, '0'));
+
+	int oldIndex = fat[blocIndex];
+	fat[blocIndex] = 255;
+	blocIndex = oldIndex;
+	
+
+	while (true)
+	{
+		hd->writeBlock(blocIndex, string(64, '0'));
+
+		if (blocIndex != 255)
+		{
+			oldIndex = fat[blocIndex];
+			fat[blocIndex] = NULL;
+			blocIndex = oldIndex;
+			
+		}
+		else
+		{
+			break;
+		}
+	}
 
 }
