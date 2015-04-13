@@ -10,9 +10,10 @@ void main()
 	DisqueDur disqueOS;
 	cout << "disque dure créeer, fichier HD.DH aussi" << endl;
 	string mot = "salut, ce n'est simplement qu'un mot pour te dire salut";
-	 
+	 string mot2 = "ihefvbgwiuebfiwbfyiuwbyr";
 	disqueOS.writeBlock(1,mot);
-	string readMe = disqueOS.readBlock(0);
+	disqueOS.writeBlock(5,mot2);
+	string readMe = disqueOS.readBlock(1);
 
 	cout << "Reading : " << readMe << endl;
 	
