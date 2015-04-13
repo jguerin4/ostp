@@ -11,9 +11,11 @@ DisqueDur::DisqueDur()
 	{
 		for (int i = 0 ; i < 64 ; i++)	//Initialisation de HD.DH (data) avec 64 * 256 => "0"
 		{
+			
 			streamHDDH << "0";
 		}
 		streamHDDH << "\n";
+		catalogue[j] =new elementCatalogue();
 	}
 	streamHDDH.close();	
 
@@ -22,6 +24,10 @@ DisqueDur::DisqueDur()
 
 DisqueDur::~DisqueDur()
 {
+	for (int j = 0; j < 256; j++)
+	{
+		delete catalogue[j];
+	}
 }
 
 string DisqueDur::readBlock(unsigned char numeroBlock)
@@ -30,7 +36,7 @@ string DisqueDur::readBlock(unsigned char numeroBlock)
 	ifstream HDDH("HD.DH", ios::in);
 	if(HDDH)
 	{
-		HDDH.seekg(numeroBlock);
+		HDDH.seekg(numeroBlock*66); //66 parce que (64 char + \n)
 		HDDH.read(buffer,64);
 		HDDH.close();
 		

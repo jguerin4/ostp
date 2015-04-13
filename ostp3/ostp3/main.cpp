@@ -1,5 +1,5 @@
 #include <iostream>
-#include "DisqueDur.h"
+#include "Os.h"
 
 // ON travaille avec des string pour utiliser les fonctions de l'objet. Selon le site http://www.cplusplus.com/reference/string/string/,
 // string * = char*
@@ -7,16 +7,17 @@ using namespace std;
 
 void main()
 {
-	DisqueDur* disqueOS;
-	disqueOS = new DisqueDur();
+	Os* os;
+	os = new Os();
 	cout << "disque dure créeer, fichier HD.DH aussi" << endl;
-	string mot = "salut, ce n'est simplement qu'un mot pour te dire salut";
-	 
-	disqueOS->writeBlock(1,mot);
-	string readMe = disqueOS->readBlock(0);
-
-	cout << "Reading : " << readMe << endl;
+	string mot = "salut, ce n'est simplement qu'un mot pour te dire salutadsdsadasaddaadsdassdasddsadsddadaadadadaddsadasdasdasdasdasdasdasdasdasdadadsadasdasdasdasdasdasdasdadasasasdasdadsasdasdads";
+	string chien = "woof woof esti";
+	string vide = "";
+	os->write("chat.txt", 10, mot.size(), &mot);
+	//os->write("chien.txt", 0, chien.size(), &chien);
+	os->write("chat.txt", 102, chien.size(), &chien);
+	os->read("chat.txt", 98,2000, &vide);
 	system("pause");
-		exit(0);
+	exit(0);
 
 }

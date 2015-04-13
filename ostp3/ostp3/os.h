@@ -10,6 +10,9 @@ class Os
 private:
 	DisqueDur* hd;
 	CHAR fat[256];
+
+	CHAR ExtendFile(CHAR blocIndex);
+	CHAR CreateFile(string name, int size);
 public:
 	Os(void);
 	~Os(void);

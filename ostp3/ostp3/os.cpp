@@ -5,10 +5,10 @@ Os::Os(void)
 {
 	hd = new DisqueDur();
 
-	for(int i =0;i<256;i++)
+	/*for(int i =0;i<256;i++)
 	{
-		fat[i] = 0;
-	}
+		fat[i] = 255;
+	}*/
 }
 
 
@@ -19,87 +19,8 @@ Os::~Os(void)
 
 void Os::read(string nomFichier, CHAR position, CHAR nombreCaractere, string* tampLecture)
 {
-	CHAR beginIndex =255;
-	for(int i=0;i<256;i++)
-	{
-		if(hd->getElementCatalogue(i)->fileName == nomFichier)
-		{
-			beginIndex = hd->getElementCatalogue(i)->indexFirstBlock;
-			break;
-		}
-	}
-
-	if(beginIndex == 255)
-	{
-		cout<<"pas de fichier trouver dans le catalogue"<<endl;
-	}
-
-	if (position + nombreCaractere > hd->getElementCatalogue(beginIndex)->filesize)
-	{
-		nombreCaractere = hd->getElementCatalogue(beginIndex)->filesize - position;
-	}
-
-	string* tempRead = new string();
-	*tempRead = "";
-	CHAR positionItr=0;
-	//set position
-	while(positionItr != position)
-	{
-		//division entiere pour voir si sur le meme bloc
-		if(position/64 != positionItr/64)
-		{
-			beginIndex = fat[beginIndex];
-			positionItr +=64;
-		}
-	}
-
-	int charRead=0;
-	//get right char amount
-	while(charRead != nombreCaractere)
-	{
-		*tempRead = hd->readBlock(beginIndex);
-		string* blockString = new string();
-
-		if(nombreCaractere- charRead <=64)
-		{
-			*blockString =tempRead->substr(nombreCaractere- charRead);
-		}
-		else if(charRead ==0)
-		{
-			*blockString =tempRead->substr(position-positionItr);
-		}
-		else
-		{
-			*blockString =*tempRead;
-		}
-
-		*tampLecture += *blockString;
-		charRead += blockString->size();
-
-		if(charRead > nombreCaractere)
-		{
-			cout<<"os read chie, on lie trop"<<endl;
-		}
-	}
-}
-
-CHAR Os::getBlocLibre()
-{
-	for(int i=0;i<256;i++)
-	{
-		if(fat[i]==0)
-		{
-			return i;
-		}
-	}
-
-	return 255;
-}
-
-void Os::write(string nomFichier, CHAR position, CHAR nombreCaractere, string* tampLecture)
-{
-	CHAR beginIndex =255;
-	for(int i=0;i<256;i++)
+	CHAR beginIndex = 0;
+	for (int i = 1; i<256; i++)
 	{
 		if (hd->getElementCatalogue(i)->fileName == nomFichier)
 		{
@@ -108,61 +29,189 @@ void Os::write(string nomFichier, CHAR position, CHAR nombreCaractere, string* t
 		}
 	}
 
-	if(beginIndex == 255)
-	{
-		//create new file
-		CHAR blocLibre = getBlocLibre();
-		elementCatalogue toAdd = elementCatalogue();
-		toAdd.fileName = nomFichier;
-		toAdd.filesize = position + nombreCaractere;
-		toAdd.indexFirstBlock = blocLibre;
-		hd->createElementCatalogue(blocLibre, &toAdd);
-
-		beginIndex = blocLibre;
-	}
-
-	string* tempWrite = new string();
-	CHAR positionItr=0;
+	string* tempRead = new string();
+	CHAR fileDelay = 0;
 	//set position
-	while(positionItr != position)
+	while (fileDelay + 64 < position)
 	{
-		//division entiere pour voir si sur le meme bloc
-		if(position/64 != positionItr/64)
-		{
-			beginIndex = fat[beginIndex];
-			positionItr +=64;
-		}
+		beginIndex = ExtendFile(beginIndex);
+		fileDelay += 64;
 	}
 
-	int charRead=0;
+	int blocIndex = beginIndex;
+	int charRead = 0;
+	int firstReadDelay = 0;
 	//get right char amount
-	while(charRead != nombreCaractere)
+	while (true)
 	{
-		*tempWrite = hd->readBlock(beginIndex);
-		string* blockString = new string();
+		*tempRead= hd->readBlock(blocIndex);
+		string* rightBlockString = new string();
+		string* leftBlockString = new string();
 
-		if(nombreCaractere- charRead <=64)//dernier bloc a ecrire dedans
+		if (charRead == 0)// premier bloc a lire dedans
 		{
-			*blockString =tempWrite->substr(nombreCaractere- charRead);
+			*leftBlockString = tempRead->substr(0, position - fileDelay);
+			firstReadDelay = leftBlockString->size();
+
+			if (nombreCaractere - charRead <= 64)
+			{
+				*tempRead = tempRead->substr(position, nombreCaractere);
+			}
+			else
+			{
+				*tempRead = tempRead->substr(position%64, 64-position%64);
+			}
 		}
-		else if(charRead ==0)// premier bloc a ecrire dedans
+		else if (nombreCaractere - charRead <= 64)//dernier bloc a ecrire dedans
 		{
-			*blockString =tempWrite->substr(position-positionItr);
-		}
-		else//bloc entre les deux
-		{
-			*blockString =*tempWrite;
+			*tempRead = tempRead->substr(0, nombreCaractere - charRead);
 		}
 
-		*tampLecture += *blockString;
-		charRead += blockString->size();
+		charRead += tempRead->size();
 
-		if(charRead > nombreCaractere)
+		if (charRead > nombreCaractere)
 		{
-			cout<<"os read chie, on lie trop"<<endl;
+			cout << "os read chie, on lie trop" << endl;
+		}
+
+		cout << "reading bloc " << blocIndex << ":" << *tempRead << endl;
+
+		if (charRead >= nombreCaractere)
+		{
+			break;
+		}
+		else
+		{
+			blocIndex = fat[blocIndex];
+			if (blocIndex == 255)
+				break;
 		}
 	}
 }
+
+CHAR Os::getBlocLibre()
+{
+	for(int i=1;i<256;i++)
+	{
+		if(fat[i]==NULL)
+		{
+			return i;
+		}
+	}
+
+	return NULL;
+}
+
+CHAR Os::CreateFile(string name, int size)
+{
+	//create new file
+	CHAR blocLibre = getBlocLibre();
+	elementCatalogue* toAdd = new elementCatalogue();
+	toAdd->fileName = name;
+	toAdd->filesize = size;
+	toAdd->indexFirstBlock = blocLibre;
+	hd->createElementCatalogue(blocLibre, toAdd);
+	fat[blocLibre] = 255;//fin de fichier
+
+	return blocLibre;
+}
+
+CHAR Os::ExtendFile(CHAR blocIndex)
+{
+	//on avance de blocs dans la fat
+	if (fat[blocIndex] == 255)//pus de blocs pour ce fichier
+	{
+		fat[blocIndex] = getBlocLibre();
+		fat[fat[blocIndex]] = 255;//met la nouvelle fin de fichier
+	}
+
+	return fat[blocIndex];
+}
+
+void Os::write(string nomFichier, CHAR position, CHAR nombreCaractere, string* tampEcriture)
+{
+	CHAR beginIndex =0;
+	for(int i=1;i<256;i++)
+	{
+		if (hd->getElementCatalogue(i)->fileName == nomFichier)
+		{
+			beginIndex = hd->getElementCatalogue(i)->indexFirstBlock;
+			break;
+		}
+	}
+
+	if(beginIndex == 0)
+	{
+		beginIndex = CreateFile(nomFichier, position + nombreCaractere);
+	}
+
+	string* tempWrite = new string();
+	CHAR fileDelay=0;
+	//set position
+	while (fileDelay + 64 < position)
+	{
+		beginIndex = ExtendFile(beginIndex);
+		fileDelay += 64;
+	}
+
+	int blocIndex = beginIndex;
+	int charRead=0;
+	int firstReadDelay = 0;
+	//get right char amount
+	while (true)
+	{
+		string tampBlocZone = tampEcriture->substr(charRead - ((charRead + firstReadDelay) % 64), 64);
+		*tempWrite = hd->readBlock(blocIndex);
+		string* rightBlockString = new string();
+		string* leftBlockString = new string();
+
+		if (charRead == 0)// premier bloc a ecrire dedans
+		{
+			*leftBlockString = tempWrite->substr(0, position - fileDelay);
+			firstReadDelay = leftBlockString->size();
+
+			if (nombreCaractere - charRead <= 64)
+			{
+				*rightBlockString = tempWrite->substr(position - fileDelay, 64 - leftBlockString->size() - tampBlocZone.size());
+			}
+
+			*tempWrite = tampBlocZone.substr(0, 64 - firstReadDelay);
+
+			
+
+			charRead += tempWrite->size();
+			tampBlocZone = *leftBlockString + *tempWrite + *rightBlockString;
+			//*tampEcriture = tampEcriture->substr(position - positionItr,64);
+		}
+		else if (nombreCaractere - charRead <= 64)//dernier bloc a ecrire dedans
+		{
+			*rightBlockString = tempWrite->substr(nombreCaractere - charRead);
+			charRead += tampBlocZone.size();
+			tampBlocZone += *rightBlockString;
+		}
+		else//bloc entre les deux
+		{
+			charRead += tampBlocZone.size();
+		}
+
+		if (charRead > nombreCaractere)
+		{
+			cout << "os write chie, on lie trop" << endl;
+		}
+
+		hd->writeBlock(blocIndex, tampBlocZone);
+
+		if (charRead >= nombreCaractere)
+		{
+			break;
+		}
+		else
+		{
+			blocIndex = ExtendFile(blocIndex);
+		}
+	}
+}
+
 void Os::deleteEOF(string nomFichier, CHAR position)
 {
 
