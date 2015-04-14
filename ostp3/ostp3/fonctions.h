@@ -1,11 +1,6 @@
 #include "time.h"
 #include "stdlib.h"
 
-void actionAleatoire()
-{
-	
-
-}
 
 void ecritureAleatoire(Os* operatingSystem)
 {
@@ -45,17 +40,56 @@ void afficherHD()
 hardDriveStream.close();
 }
 
-void afficherListeFichier()
+void afficherListeFichier(Os* operatingSystem)
 {
+	for(int i = 0 ; i < 256; i++)
+	{
+		elementCatalogue* catalogueFAT8 = operatingSystem->getHD()->getElementCatalogue(i);
+		if(catalogueFAT8->filesize != 0 && catalogueFAT8->fileName != "")
+		{
+			cout << "Fichier #" << i << " :" << catalogueFAT8->fileName << ". Bloc: ";
+
+
+			
+		}
+	}
+	cout << endl << "--------------- Fin affichage ---------------" << endl;
+}
+
+void supprimerFichierAleatoire(Os* operatingSystem, int position)
+{
+	int randomAlphabet = rand() % 26 +97;
+	char fileName[5] = {randomAlphabet,46,116,120,116};	// revient à [a-z].txt
+	string newFileName = fileName;
+	newFileName = newFileName.substr(0,5);	//Pour regler rapidement un problème d'overflow. 
+
+	operatingSystem->deleteEOF(newFileName,position);	//Position 0 delete le fichier (Pas litéralement, on
+												// ne fait qu'indiqué dans la FAT que je fichier à été supprimé
 
 }
 
-void supprimerFichierAleatoire(Os* operatingSystem)
+
+void actionAleatoire(Os* operatingSystem)
 {
 
-}
+	srand (clock());
+	int writeOrDelete = rand() %5;
+	int positionAleatoire;
 
-void supprimerEOFAleatoire(Os* operatingSystem)
-{
+	switch(writeOrDelete)
+	{
+	case 0:	//une chance sur 4 de supprimer un fichier au complet
+		supprimerFichierAleatoire(operatingSystem,0);
+		break;
+
+	case 1:
+		positionAleatoire = rand() % 63 + 1;	//Une chance sur 4 de supprimer un fichier partiellement
+		supprimerFichierAleatoire(operatingSystem,positionAleatoire);
+		break;
+
+	default:	//Une chance sur deux d'écrire/append un nouveau fichier
+		ecritureAleatoire(operatingSystem);
+		break;
+	}
 
 }

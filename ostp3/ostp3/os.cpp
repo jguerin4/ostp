@@ -4,7 +4,7 @@
 Os::Os(void)
 {
 	hd = new DisqueDur();
-	fill(fat,fat+256,NULL);
+	fill(fat,fat+256,0);	//Initialisation de la fat
 }
 
 
@@ -16,6 +16,7 @@ Os::~Os(void)
 void Os::read(string nomFichier, CHAR position, CHAR nombreCaractere, string* tampLecture)
 {
 	CHAR beginIndex = 0;
+	
 	for (int i = 0; i<256; i++)
 	{
 		if (hd->getElementCatalogue(i)->fileName == nomFichier)
@@ -36,6 +37,8 @@ void Os::read(string nomFichier, CHAR position, CHAR nombreCaractere, string* ta
 			break;
 		}
 	}
+
+
 
 	string* tempRead = new string();
 	int fileDelay =0;
@@ -165,6 +168,11 @@ void Os::write(string nomFichier, CHAR position, CHAR nombreCaractere, string* t
 	if(beginIndex == 0)
 	{
 		beginIndex = CreateFile(nomFichier, position + nombreCaractere);
+		cout << "Creation du fichier: " << nomFichier << endl;
+	}
+	else
+	{
+		cout << "Reecriture du fichier: " << nomFichier << endl;
 	}
 
 	string* tempWrite = new string();
@@ -243,17 +251,28 @@ void Os::write(string nomFichier, CHAR position, CHAR nombreCaractere, string* t
 
 void Os::deleteEOF(string nomFichier, CHAR position)
 {
+	bool fichierTrouve = false;
 	CHAR beginIndex = 0;
 	for (int i = 1; i<256; i++)
 	{
 		if (hd->getElementCatalogue(i)->fileName == nomFichier)
 		{
+			fichierTrouve = true;
 			beginIndex = hd->getElementCatalogue(i)->indexFirstBlock;
 			hd->getElementCatalogue(i)->filesize = position;
 			break;
 		}
 	}
+	if(!fichierTrouve)	//Le fichier n'est pas dans le catalogue
+	{
+		cout << "Le fichier " << nomFichier << "n'existe pas, annulation de la suppression" << endl;
+		return;
+	}
 
+	else
+	{
+		cout << "Le fichier " << nomFichier << "est supprime a la position " << position << endl;
+	}
 	int fileDelay = 0;
 	while (fileDelay + 64 < position)
 	{
@@ -308,7 +327,9 @@ void Os::deleteEOF(string nomFichier, CHAR position)
 			break;
 		}
 	}
+}
 
-
-
+DisqueDur* Os::getHD()
+{
+	return hd;
 }

@@ -21,5 +21,6 @@ public:
 	void write(string nomFichier,CHAR position, CHAR nombreCaractere, string* tampEcriture);
 	void deleteEOF(string nomFichier,CHAR position);
 	CHAR getBlocLibre();
+	DisqueDur* getHD();
 };
 

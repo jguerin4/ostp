@@ -28,7 +28,6 @@ void main()
 	operatingSystem = new Os();
 	cout << "Disque dure créeer (HD.DH), ainsi que le simulateur de systeme d'exploitation" << endl << endl;
 	string buffer = "";
-	int writeOrDelete;
 
 	//Pour le timer
 	clock_t timer;
@@ -68,33 +67,18 @@ void main()
 	{
 		tempsEcoule = (clock() - timer) / (double) CLOCKS_PER_SEC;
 
-		if(tempsEcoule >= 5.0)	//On affiche à tous les 5 secondes
+		if(tempsEcoule < 5.0)	//On affiche à tous les 5 secondes
 		{
-			afficherHD();
-			cout << "Liste des fichiers:" << endl;
-			afficherListeFichier();	//RESTANT !!!!!!!!!!!!!!!!!!!!!!!!!!!!
-			timer = clock();
+			actionAleatoire(operatingSystem);
+			//cout << "Action aléatoire, temps ecoulé:" << tempsEcoule << endl;
 		}
 
 		else // Sinon on effectue une action aléatoire
 		{
-			srand (clock());
-			writeOrDelete = rand() %5;
-			
-			switch(writeOrDelete)
-			{
-			case 0:	//une chance sur 4 de supprimer un fichier au complet
-				supprimerFichierAleatoire(operatingSystem);	//RESTANT!!!
-				break;
-
-			case 1:
-				supprimerEOFAleatoire(operatingSystem);
-				break;
-
-			default:
-				ecritureAleatoire(operatingSystem);
-				break;
-			}
+			afficherHD();
+			cout << "Liste des fichiers:" << endl;
+			afficherListeFichier(operatingSystem);	//RESTANT !!!!!!!!!!!!!!!!!!!!!!!!!!!!
+			timer = clock();
 		}
 
 	}

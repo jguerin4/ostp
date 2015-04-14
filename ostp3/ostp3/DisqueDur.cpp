@@ -16,6 +16,9 @@ DisqueDur::DisqueDur()
 		}
 		streamHDDH << "\n";
 		catalogue[j] =new elementCatalogue();
+		catalogue[j]->filesize = 0;
+		catalogue[j]->indexFirstBlock = 255;
+
 	}
 	streamHDDH.close();	
 
