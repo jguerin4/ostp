@@ -15,7 +15,7 @@ Os::~Os(void)
 void Os::read(string nomFichier, CHAR position, CHAR nombreCaractere, string* tampLecture)
 {
 	CHAR beginIndex = 0;
-	for (int i = 1; i<256; i++)
+	for (int i = 0; i<256; i++)
 	{
 		if (hd->getElementCatalogue(i)->fileName == nomFichier)
 		{
@@ -88,6 +88,7 @@ void Os::read(string nomFichier, CHAR position, CHAR nombreCaractere, string* ta
 
 		if (charRead >= nombreCaractere)
 		{
+			*tampLecture = *tempRead;
 			break;
 		}
 		else
@@ -100,7 +101,9 @@ void Os::read(string nomFichier, CHAR position, CHAR nombreCaractere, string* ta
 			}
 				
 		}
+		
 	}
+	
 }
 
 CHAR Os::getBlocLibre()
@@ -197,7 +200,7 @@ void Os::write(string nomFichier, CHAR position, CHAR nombreCaractere, string* t
 
 			if (nombreCaractere - charRead <= 64)
 			{
-				*rightBlockString = tempWrite->substr(position - fileDelay, 64 - leftBlockString->size() - tampBlocZone.size());
+				*rightBlockString = tempWrite->substr(position - fileDelay, 64 - leftBlockString->size() - tampBlocZone.size()); 
 			}
 
 			*tempWrite = tampBlocZone.substr(0, 64 - firstReadDelay);

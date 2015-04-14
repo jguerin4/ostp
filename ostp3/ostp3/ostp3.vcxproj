@@ -84,6 +84,7 @@
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="DisqueDur.h" />
+    <ClInclude Include="fonctions.h" />
     <ClInclude Include="os.h" />
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
