@@ -23,6 +23,5 @@ public:
 	void showFileBlocks(string nomFichier);
 	DisqueDur* getHD();
 	CHAR getBlocLibre();
-	DisqueDur* getHD();
 };
 

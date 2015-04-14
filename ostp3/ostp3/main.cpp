@@ -33,29 +33,10 @@ void main()
 	clock_t timer;
 	double tempsEcoule;
 	
-	/////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
-	// Phase de test #1: Création d'un simple fichier texte (testPrimaire.txt) et sa lecture
-	/////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
-
-	cout << "Phase de test #1: write+read simple qui rentre dans un bloc: " << endl;
-	string test = "testaaaaaaaaaaaaaaaaaaaaaaa";
-
-	operatingSystem->write("testPrimaire.txt", 0, test.size(), &test);		//Crée le fichier s'il n'existe pas (index premier block = 0)
-																			// Position = numéro de début dans la ligne
-	operatingSystem->read("testPrimaire.txt", 0, 2000, &buffer);
-	cout << " Buffer: " << buffer << endl << endl;
-
-	/////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
-	// Phase de test #2: Création d'un fichier aléatoire
-	/////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
-	cout << "Phase de test #2: write+read simple d'un fichier avec des lettres aléatoires: " << endl;
-
-
-
-	/////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
-	// Phase de test #3: Affichage du disque dur après les tests
-	/////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
-	afficherHD();	//définit dans fonctions.h, affiche HD.DH
+	afficherHD();
+	cout << "Liste des fichiers:" << endl;
+	afficherListeFichier(operatingSystem);	
+	cout << "Traitement de fonctions aleatoires,reaffichage dans 5 secondes ..." << endl;
 
 	/////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 	// Boucle infini du programme, conformément aux demandes de la spécification
@@ -77,7 +58,8 @@ void main()
 		{
 			afficherHD();
 			cout << "Liste des fichiers:" << endl;
-			afficherListeFichier(operatingSystem);	//RESTANT !!!!!!!!!!!!!!!!!!!!!!!!!!!!
+			afficherListeFichier(operatingSystem);	
+			cout << "Traitement de fonctions aleatoires, reaffichage dans 5 secondes ..." << endl;
 			timer = clock();
 		}
 

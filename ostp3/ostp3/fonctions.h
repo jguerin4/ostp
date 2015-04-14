@@ -49,7 +49,7 @@ void afficherListeFichier(Os* operatingSystem)
 		if(catalogueFAT8->filesize != 0 && catalogueFAT8->fileName != "")
 		{
 			
-			cout << "Fichier #" << i << " :" << catalogueFAT8->fileName;
+			cout << "Fichier #" << i << " : " << catalogueFAT8->fileName << " ";
 			operatingSystem->showFileBlocks(catalogueFAT8->fileName);
 		}
 	}

@@ -256,13 +256,13 @@ void Os::showFileBlocks(string nomFichier)
 			break;
 		}
 	}
-	cout<<"Bloc: ";
+	cout<<"Bloc(s): ";
 	while(index != 255)
 	{
-		cout<<(int)index<<", ";
+		cout<<(int)index<<" -> ";
 		index = fat[index];
 	}
-
+	cout << "255(EOF)";
 	cout<<endl;
 	return;
 }
