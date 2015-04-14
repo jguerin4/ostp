@@ -11,19 +11,19 @@ void ecritureAleatoire(Os* operatingSystem)
 {
 	int randomAlphabet = rand() % 26 +97;
 
-	char randomChar[40];	// Initialisation du tableau avec que des lettres équivalente aléatoire
-	fill(randomChar,randomChar+40,randomAlphabet); // remplit randomChar par une répétition de lettre.
+	char randomChar[3];	// Initialisation du tableau avec que des lettres équivalente aléatoire
+	fill(randomChar,randomChar+3,randomAlphabet); // remplit randomChar par une répétition de lettre.
 	string randomString = randomChar;
-	randomString = randomString.substr(0,40); // Pour regler rapidement un problème d'overflow
+	randomString = randomString.substr(0,3); // Pour regler rapidement un problème d'overflow
 
 	char fileName[5] = {randomAlphabet,46,116,120,116};	// revient à [a-z].txt
 	string newFileName = fileName;
 	newFileName = newFileName.substr(0,5);	//Même raison
 
-	operatingSystem->write(newFileName, 0,40,&randomString);
+	operatingSystem->write(newFileName, 0,3,&randomString);
 
-	cout << "randomChar: " << randomString << endl;
-	cout << "new file name: " << newFileName << endl;
+	//cout << "randomChar: " << randomString << endl;
+	//cout << "new file name: " << newFileName << endl;
 }
 
 void afficherHD()
