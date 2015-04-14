@@ -4,6 +4,8 @@
 Os::Os(void)
 {
 	hd = new DisqueDur();
+
+	fill(fat,fat+256,0);
 }
 
 
@@ -12,7 +14,12 @@ Os::~Os(void)
 	delete hd;
 }
 
-void Os::read(string nomFichier, CHAR position, CHAR nombreCaractere, string* tampLecture)
+DisqueDur* Os::getHD()
+{
+	return hd;
+}
+
+void Os::read(string nomFichier, int position, int nombreCaractere, string* tampLecture)
 {
 	CHAR beginIndex = 0;
 	for (int i = 1; i<256; i++)
@@ -112,7 +119,8 @@ CHAR Os::getBlocLibre()
 			return i;
 		}
 	}
-
+	cout<<"LE DUR EST PLEIN, AUTO DESTRUCTION"<<endl;
+	exit(-1);
 	return NULL;
 }
 
@@ -142,7 +150,7 @@ CHAR Os::ExtendFile(CHAR blocIndex)
 	return fat[blocIndex];
 }
 
-void Os::write(string nomFichier, CHAR position, CHAR nombreCaractere, string* tampEcriture)
+void Os::write(string nomFichier, int position, int nombreCaractere, string* tampEcriture)
 {
 	CHAR beginIndex =0;
 	for(int i=1;i<256;i++)
@@ -237,7 +245,29 @@ void Os::write(string nomFichier, CHAR position, CHAR nombreCaractere, string* t
 	}
 }
 
-void Os::deleteEOF(string nomFichier, CHAR position)
+void Os::showFileBlocks(string nomFichier)
+{
+	CHAR index = 0;
+	for (int i = 1; i<256; i++)
+	{
+		if (hd->getElementCatalogue(i)->fileName == nomFichier)
+		{
+			index = hd->getElementCatalogue(i)->indexFirstBlock;
+			break;
+		}
+	}
+	cout<<"Bloc: ";
+	while(index != 255)
+	{
+		cout<<(int)index<<", ";
+		index = fat[index];
+	}
+
+	cout<<endl;
+	return;
+}
+
+void Os::deleteEOF(string nomFichier, int position)
 {
 	CHAR beginIndex = 0;
 	for (int i = 1; i<256; i++)
