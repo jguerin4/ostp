@@ -4,6 +4,7 @@
 Os::Os(void)
 {
 	hd = new DisqueDur();
+	fill(fat,fat+256,NULL);
 }
 
 
