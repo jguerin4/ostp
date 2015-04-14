@@ -14,15 +14,12 @@ void ecritureAleatoire(Os* operatingSystem)
 
 	char fileName[5] = {randomAlphabet,46,116,120,116};	// revient à [a-z].txt
 	string newFileName = fileName;
-	newFileName = newFileName.substr(0,5);	//Même raison
+	newFileName = newFileName.substr(0,5);	
 
 	operatingSystem->write(newFileName, 0,longueurMot,&randomString);
-
-	//cout << "randomChar: " << randomString << endl;
-	//cout << "new file name: " << newFileName << endl;
 }
 
-void afficherHD()
+void afficherHD()	//AFfichage du disque dur, 1 ligne = 1 bloc
 {
 	cout << "Contenu du disque dur:" << endl;
 	ifstream hardDriveStream;
@@ -50,7 +47,7 @@ void afficherListeFichier(Os* operatingSystem)
 		{
 			
 			cout << "Fichier #" << i << " : " << catalogueFAT8->fileName << " ";
-			operatingSystem->showFileBlocks(catalogueFAT8->fileName);
+			operatingSystem->showFileBlocks(catalogueFAT8->fileName);	//Affiche la chaine de bloc(s) dans la fat pour le fichier
 		}
 	}
 	cout << endl << "--------------- Fin affichage ---------------" << endl;
@@ -65,9 +62,7 @@ void supprimerFichierAleatoire(Os* operatingSystem, int position)
 
 	operatingSystem->deleteEOF(newFileName,position);	//Position 0 delete le fichier (Pas litéralement, on
 												// ne fait qu'indiqué dans la FAT que je fichier à été supprimé
-
 }
-
 
 void actionAleatoire(Os* operatingSystem)
 {

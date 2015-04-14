@@ -4,19 +4,13 @@
 #include <cstdio>
 #include <ctime>
 
-
 //Auteurs: Johnny GUérin et Brian Fillion
 //Date de remise: 14 avril 2015
 
 // ON travaille avec des string pour utiliser les fonctions de l'objet. Selon le site http://www.cplusplus.com/reference/string/string/,
-// string * = char*
-
-
+// string = char*, avec des fonctions supplémentaires.
 
 using namespace std;
-
-
-
 
 void main()
 {
@@ -62,8 +56,5 @@ void main()
 			cout << "Traitement de fonctions aleatoires, reaffichage dans 5 secondes ..." << endl;
 			timer = clock();
 		}
-
 	}
-
-	/**/
 }
