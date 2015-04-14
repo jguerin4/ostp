@@ -14,11 +14,12 @@ void main()
 	string chien = "woof woof esti";
 	string vide = "";
 	os->write("chat.txt", 10, mot.size(), &mot);
-	//os->write("chien.txt", 0, chien.size(), &chien);
+	os->write("chien.txt", 0, chien.size(), &chien);
 	os->write("chat.txt", 102, chien.size(), &chien);
 	
 	os->deleteEOF("chat.txt", 90);
 	os->read("chat.txt", 0, 2000, &vide);
+	os->read("chien.txt", 0, 2000, &vide);
 	system("pause");
 	exit(0);
 

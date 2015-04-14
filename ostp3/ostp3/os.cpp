@@ -4,11 +4,6 @@
 Os::Os(void)
 {
 	hd = new DisqueDur();
-
-	/*for(int i =0;i<256;i++)
-	{
-		fat[i] = 255;
-	}*/
 }
 
 
@@ -25,6 +20,18 @@ void Os::read(string nomFichier, CHAR position, CHAR nombreCaractere, string* ta
 		if (hd->getElementCatalogue(i)->fileName == nomFichier)
 		{
 			beginIndex = hd->getElementCatalogue(i)->indexFirstBlock;
+			if (hd->getElementCatalogue(i)->filesize < position + nombreCaractere)
+			{
+				if (hd->getElementCatalogue(i)->filesize < position)
+				{
+					cout << "on demande de lire en dehors du fichier size = " << (int)hd->getElementCatalogue(i)->filesize << " on veut lire jusqua: " << (int)(position + nombreCaractere) << endl;
+				}
+				else
+				{
+					nombreCaractere = hd->getElementCatalogue(i)->filesize - position;
+				}
+				
+			}
 			break;
 		}
 	}
@@ -143,6 +150,10 @@ void Os::write(string nomFichier, CHAR position, CHAR nombreCaractere, string* t
 		if (hd->getElementCatalogue(i)->fileName == nomFichier)
 		{
 			beginIndex = hd->getElementCatalogue(i)->indexFirstBlock;
+			if (hd->getElementCatalogue(i)->filesize < position + nombreCaractere)
+			{
+				hd->getElementCatalogue(i)->filesize = position + nombreCaractere;
+			}
 			break;
 		}
 	}
@@ -234,6 +245,7 @@ void Os::deleteEOF(string nomFichier, CHAR position)
 		if (hd->getElementCatalogue(i)->fileName == nomFichier)
 		{
 			beginIndex = hd->getElementCatalogue(i)->indexFirstBlock;
+			hd->getElementCatalogue(i)->filesize = position;
 			break;
 		}
 	}
@@ -270,14 +282,11 @@ void Os::deleteEOF(string nomFichier, CHAR position)
 
 	while (true)
 	{
-		hd->writeBlock(blocIndex, string(64, '0'));
-
 		if (blocIndex != 255)
 		{
 			oldIndex = fat[blocIndex];
 			fat[blocIndex] = NULL;
 			blocIndex = oldIndex;
-			
 		}
 		else
 		{
