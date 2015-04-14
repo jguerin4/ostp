@@ -18,12 +18,12 @@ public:
 	DisqueDur(void);
 	~DisqueDur(void);
 
-	string readBlock(unsigned char numéroBlock);
+	string readBlock(unsigned char numeroBlock);
 	void writeBlock(unsigned char numeroBlock, string tampEcriture);
 	elementCatalogue* getElementCatalogue(int i);
 	void createElementCatalogue(int i,elementCatalogue* element);
 
 private:
-	ofstream streamHDDH;
+	ofstream* streamHDDH;
 	elementCatalogue *catalogue[256];
 };

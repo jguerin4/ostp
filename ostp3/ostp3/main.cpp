@@ -1,5 +1,4 @@
-#include <iostream>
-#include "Os.h"
+#include "os.h"
 #include "fonctions.h"
 #include <cstdio>
 #include <ctime>
@@ -12,7 +11,7 @@
 
 using namespace std;
 
-void main()
+int main()
 {
 	/**/
 	/////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
@@ -38,11 +37,12 @@ void main()
 	
 	timer = clock();
 
+	//for(int i = 0; i < 5000; i++)
 	while(true)
 	{
 		tempsEcoule = (clock() - timer) / (double) CLOCKS_PER_SEC;
 
-		if(tempsEcoule < 5.0)	//On affiche à tous les 5 secondes
+		if(tempsEcoule < 1.2)	//On affiche à tous les 5 secondes. Avec visual studio: <5, mais plus lent sous sunense, donc 0.5.
 		{
 			actionAleatoire(operatingSystem);
 			//cout << "Action aléatoire, temps ecoulé:" << tempsEcoule << endl;
@@ -56,5 +56,7 @@ void main()
 			cout << "Traitement de fonctions aleatoires, reaffichage dans 5 secondes ..." << endl;
 			timer = clock();
 		}
+
 	}
+	return 0;
 }

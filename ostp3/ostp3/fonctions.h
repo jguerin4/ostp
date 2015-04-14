@@ -5,9 +5,13 @@
 void ecritureAleatoire(Os* operatingSystem)
 {
 	int randomAlphabet = rand() % 26 +97;
+	
 	int longueurMot = rand()%400;
 
 	char randomChar[450];	// Initialisation du tableau avec que des lettres équivalente aléatoire
+	
+	
+	
 	fill(randomChar,randomChar+(int)longueurMot,randomAlphabet); // remplit randomChar par une répétition de lettre.
 	string randomString = randomChar;
 	randomString = randomString.substr(0,longueurMot); // Pour regler rapidement un problème d'overflow

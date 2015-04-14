@@ -24,4 +24,3 @@ public:
 	DisqueDur* getHD();
 	CHAR getBlocLibre();
 };
-

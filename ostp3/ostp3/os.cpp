@@ -90,7 +90,7 @@ void Os::read(string nomFichier, int position, int nombreCaractere, string* tamp
 
 		if (charRead > nombreCaractere)
 		{
-			cout << "os read chie, on lie trop" << endl;
+			cout << "os read disfonctionnel, on lie trop" << endl;
 		}
 
 		cout << "reading bloc " << blocIndex << ":" << *tempRead << endl;
@@ -198,20 +198,17 @@ void Os::write(string nomFichier, int position, int nombreCaractere, string* tam
 	while (true)
 	{
 		string tampBlocZone = tampEcriture->substr(charRead - ((charRead + firstReadDelay) % 64), 64);
-		*tempWrite = hd->readBlock(blocIndex);
+		*tempWrite = hd->readBlock((CHAR)blocIndex);
 		string* rightBlockString = new string();
 		string* leftBlockString = new string();
-
 		if (charRead == 0)// premier bloc a ecrire dedans
 		{
 			*leftBlockString = tempWrite->substr(0, position%64);
 			firstReadDelay = leftBlockString->size();
-
 			if (nombreCaractere - charRead <= 64)
 			{
 				*rightBlockString = tempWrite->substr(position - fileDelay, 64 - leftBlockString->size() - tampBlocZone.size());
 			}
-
 			*tempWrite = tampBlocZone.substr(0, 64 - firstReadDelay);
 
 			
@@ -233,11 +230,9 @@ void Os::write(string nomFichier, int position, int nombreCaractere, string* tam
 
 		if (charRead > nombreCaractere)
 		{
-			cout << "os write chie, on lie trop" << endl;
+			cout << "os write ¸disfonctionnel, on lie trop" << endl;
 		}
-
-		hd->writeBlock(blocIndex, tampBlocZone);
-
+		hd->writeBlock((CHAR)blocIndex, tampBlocZone);
 		if (charRead >= nombreCaractere)
 		{
 			break;
@@ -247,6 +242,7 @@ void Os::write(string nomFichier, int position, int nombreCaractere, string* tam
 			blocIndex = ExtendFile(blocIndex);
 		}
 	}
+
 }
 
 void Os::showFileBlocks(string nomFichier)
@@ -260,13 +256,13 @@ void Os::showFileBlocks(string nomFichier)
 			break;
 		}
 	}
-	cout<<"Bloc(s): ";
+	cout<<"Bloc: ";
 	while(index != 255)
 	{
-		cout<<(int)index<<" -> ";
+		cout<<(int)index<<", ";
 		index = fat[index];
 	}
-	cout << "255(EOF)";
+
 	cout<<endl;
 	return;
 }
