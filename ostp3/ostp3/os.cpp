@@ -4,7 +4,8 @@
 Os::Os(void)
 {
 	hd = new DisqueDur();
-	fill(fat,fat+256,0);	//Initialisation de la fat
+
+	fill(fat,fat+256,0);
 }
 
 
@@ -13,11 +14,15 @@ Os::~Os(void)
 	delete hd;
 }
 
-void Os::read(string nomFichier, CHAR position, CHAR nombreCaractere, string* tampLecture)
+DisqueDur* Os::getHD()
+{
+	return hd;
+}
+
+void Os::read(string nomFichier, int position, int nombreCaractere, string* tampLecture)
 {
 	CHAR beginIndex = 0;
-	
-	for (int i = 0; i<256; i++)
+	for (int i = 1; i<256; i++)
 	{
 		if (hd->getElementCatalogue(i)->fileName == nomFichier)
 		{
@@ -37,8 +42,6 @@ void Os::read(string nomFichier, CHAR position, CHAR nombreCaractere, string* ta
 			break;
 		}
 	}
-
-
 
 	string* tempRead = new string();
 	int fileDelay =0;
@@ -85,14 +88,13 @@ void Os::read(string nomFichier, CHAR position, CHAR nombreCaractere, string* ta
 
 		if (charRead > nombreCaractere)
 		{
-			cout << "os read disfonctionnel, on lie trop" << endl;
+			cout << "os read chie, on lie trop" << endl;
 		}
 
-		//cout << "reading bloc " << blocIndex << ":" << *tempRead << endl;
+		cout << "reading bloc " << blocIndex << ":" << *tempRead << endl;
 
 		if (charRead >= nombreCaractere)
 		{
-			*tampLecture = *tempRead;
 			break;
 		}
 		else
@@ -105,9 +107,7 @@ void Os::read(string nomFichier, CHAR position, CHAR nombreCaractere, string* ta
 			}
 				
 		}
-		
 	}
-	
 }
 
 CHAR Os::getBlocLibre()
@@ -119,7 +119,8 @@ CHAR Os::getBlocLibre()
 			return i;
 		}
 	}
-
+	cout<<"LE DUR EST PLEIN, AUTO DESTRUCTION"<<endl;
+	exit(-1);
 	return NULL;
 }
 
@@ -149,7 +150,7 @@ CHAR Os::ExtendFile(CHAR blocIndex)
 	return fat[blocIndex];
 }
 
-void Os::write(string nomFichier, CHAR position, CHAR nombreCaractere, string* tampEcriture)
+void Os::write(string nomFichier, int position, int nombreCaractere, string* tampEcriture)
 {
 	CHAR beginIndex =0;
 	for(int i=1;i<256;i++)
@@ -168,11 +169,6 @@ void Os::write(string nomFichier, CHAR position, CHAR nombreCaractere, string* t
 	if(beginIndex == 0)
 	{
 		beginIndex = CreateFile(nomFichier, position + nombreCaractere);
-		cout << "Creation du fichier: " << nomFichier << endl;
-	}
-	else
-	{
-		cout << "Reecriture du fichier: " << nomFichier << endl;
 	}
 
 	string* tempWrite = new string();
@@ -209,7 +205,7 @@ void Os::write(string nomFichier, CHAR position, CHAR nombreCaractere, string* t
 
 			if (nombreCaractere - charRead <= 64)
 			{
-				*rightBlockString = tempWrite->substr(position - fileDelay, 64 - leftBlockString->size() - tampBlocZone.size()); 
+				*rightBlockString = tempWrite->substr(position - fileDelay, 64 - leftBlockString->size() - tampBlocZone.size());
 			}
 
 			*tempWrite = tampBlocZone.substr(0, 64 - firstReadDelay);
@@ -249,30 +245,41 @@ void Os::write(string nomFichier, CHAR position, CHAR nombreCaractere, string* t
 	}
 }
 
-void Os::deleteEOF(string nomFichier, CHAR position)
+void Os::showFileBlocks(string nomFichier)
 {
-	bool fichierTrouve = false;
+	CHAR index = 0;
+	for (int i = 1; i<256; i++)
+	{
+		if (hd->getElementCatalogue(i)->fileName == nomFichier)
+		{
+			index = hd->getElementCatalogue(i)->indexFirstBlock;
+			break;
+		}
+	}
+	cout<<"Bloc: ";
+	while(index != 255)
+	{
+		cout<<(int)index<<", ";
+		index = fat[index];
+	}
+
+	cout<<endl;
+	return;
+}
+
+void Os::deleteEOF(string nomFichier, int position)
+{
 	CHAR beginIndex = 0;
 	for (int i = 1; i<256; i++)
 	{
 		if (hd->getElementCatalogue(i)->fileName == nomFichier)
 		{
-			fichierTrouve = true;
 			beginIndex = hd->getElementCatalogue(i)->indexFirstBlock;
 			hd->getElementCatalogue(i)->filesize = position;
 			break;
 		}
 	}
-	if(!fichierTrouve)	//Le fichier n'est pas dans le catalogue
-	{
-		cout << "Le fichier " << nomFichier << "n'existe pas, annulation de la suppression" << endl;
-		return;
-	}
 
-	else
-	{
-		cout << "Le fichier " << nomFichier << "est supprime a la position " << position << endl;
-	}
 	int fileDelay = 0;
 	while (fileDelay + 64 < position)
 	{
@@ -288,9 +295,6 @@ void Os::deleteEOF(string nomFichier, CHAR position)
 		}
 	}
 
-	
-
-
 	string* tempRead = new string();
 	int blocIndex = beginIndex;
 	
@@ -302,15 +306,7 @@ void Os::deleteEOF(string nomFichier, CHAR position)
 	hd->writeBlock(blocIndex, *leftBlockString + string(64 - position % 64, '0'));
 
 	int oldIndex = fat[blocIndex];
-	if(position == 0)
-	{
-		fat[blocIndex] = 0;
-	}
-	else
-	{
-		fat[blocIndex] = 255;
-	}
-	
+	fat[blocIndex] = 255;
 	blocIndex = oldIndex;
 	
 
@@ -327,9 +323,5 @@ void Os::deleteEOF(string nomFichier, CHAR position)
 			break;
 		}
 	}
-}
 
-DisqueDur* Os::getHD()
-{
-	return hd;
 }

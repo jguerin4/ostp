@@ -17,9 +17,11 @@ public:
 	Os(void);
 	~Os(void);
 
-	void read(string nomFichier,CHAR position, CHAR nombreCaractere, string* tampLecture);
-	void write(string nomFichier,CHAR position, CHAR nombreCaractere, string* tampEcriture);
-	void deleteEOF(string nomFichier,CHAR position);
+	void read(string nomFichier,int position, int nombreCaractere, string* tampLecture);
+	void write(string nomFichier,int position, int nombreCaractere, string* tampLecture);
+	void deleteEOF(string nomFichier,int position);
+	void showFileBlocks(string nomFichier);
+	DisqueDur* getHD();
 	CHAR getBlocLibre();
 	DisqueDur* getHD();
 };

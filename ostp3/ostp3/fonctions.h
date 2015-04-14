@@ -5,17 +5,18 @@
 void ecritureAleatoire(Os* operatingSystem)
 {
 	int randomAlphabet = rand() % 26 +97;
+	int longueurMot = rand()%400;
 
-	char randomChar[3];	// Initialisation du tableau avec que des lettres équivalente aléatoire
-	fill(randomChar,randomChar+3,randomAlphabet); // remplit randomChar par une répétition de lettre.
+	char randomChar[450];	// Initialisation du tableau avec que des lettres équivalente aléatoire
+	fill(randomChar,randomChar+(int)longueurMot,randomAlphabet); // remplit randomChar par une répétition de lettre.
 	string randomString = randomChar;
-	randomString = randomString.substr(0,3); // Pour regler rapidement un problème d'overflow
+	randomString = randomString.substr(0,longueurMot); // Pour regler rapidement un problème d'overflow
 
 	char fileName[5] = {randomAlphabet,46,116,120,116};	// revient à [a-z].txt
 	string newFileName = fileName;
 	newFileName = newFileName.substr(0,5);	//Même raison
 
-	operatingSystem->write(newFileName, 0,3,&randomString);
+	operatingSystem->write(newFileName, 0,longueurMot,&randomString);
 
 	//cout << "randomChar: " << randomString << endl;
 	//cout << "new file name: " << newFileName << endl;
@@ -47,10 +48,9 @@ void afficherListeFichier(Os* operatingSystem)
 		elementCatalogue* catalogueFAT8 = operatingSystem->getHD()->getElementCatalogue(i);
 		if(catalogueFAT8->filesize != 0 && catalogueFAT8->fileName != "")
 		{
-			cout << "Fichier #" << i << " :" << catalogueFAT8->fileName << ". Bloc: ";
-
-
 			
+			cout << "Fichier #" << i << " :" << catalogueFAT8->fileName;
+			operatingSystem->showFileBlocks(catalogueFAT8->fileName);
 		}
 	}
 	cout << endl << "--------------- Fin affichage ---------------" << endl;
