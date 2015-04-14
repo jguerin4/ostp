@@ -22,6 +22,7 @@ DisqueDur* Os::getHD()
 void Os::read(string nomFichier, int position, int nombreCaractere, string* tampLecture)
 {
 	CHAR beginIndex = 0;
+	//on cherche le premier index dans le catalogue de fichier
 	for (int i = 1; i<256; i++)
 	{
 		if (hd->getElementCatalogue(i)->fileName == nomFichier)
@@ -45,6 +46,7 @@ void Os::read(string nomFichier, int position, int nombreCaractere, string* tamp
 
 	string* tempRead = new string();
 	int fileDelay =0;
+	//on se place dans le bloc ou se trouve Position
 	while (fileDelay + 64 < position)
 	{
 		if (beginIndex != 255)
@@ -59,7 +61,7 @@ void Os::read(string nomFichier, int position, int nombreCaractere, string* tamp
 
 	int blocIndex = beginIndex;
 	int charRead = 0;
-	//get right char amount
+	//on lit ce quil faut dans les blocs
 	while (true)
 	{
 		*tempRead= hd->readBlock(blocIndex);
@@ -153,6 +155,7 @@ CHAR Os::ExtendFile(CHAR blocIndex)
 void Os::write(string nomFichier, int position, int nombreCaractere, string* tampEcriture)
 {
 	CHAR beginIndex =0;
+	//on cherche le premier index du fichier dans le catalogue
 	for(int i=1;i<256;i++)
 	{
 		if (hd->getElementCatalogue(i)->fileName == nomFichier)
@@ -166,6 +169,7 @@ void Os::write(string nomFichier, int position, int nombreCaractere, string* tam
 		}
 	}
 
+	//le fichier est pas dans le catalogue donc on le crée
 	if(beginIndex == 0)
 	{
 		beginIndex = CreateFile(nomFichier, position + nombreCaractere);
@@ -173,7 +177,7 @@ void Os::write(string nomFichier, int position, int nombreCaractere, string* tam
 
 	string* tempWrite = new string();
 	CHAR fileDelay=0;
-	//set position
+	//on se place dans le bloc ou se trouve Position
 	while (fileDelay + 64 < position)
 	{
 		if (beginIndex != 255)
@@ -190,7 +194,7 @@ void Os::write(string nomFichier, int position, int nombreCaractere, string* tam
 	int blocIndex = beginIndex;
 	int charRead=0;
 	int firstReadDelay = 0;
-	//get right char amount
+	//on ecrit ce quil faut dans les blocs
 	while (true)
 	{
 		string tampBlocZone = tampEcriture->substr(charRead - ((charRead + firstReadDelay) % 64), 64);
